@@ -1,0 +1,14 @@
+pandas
+jupyter
+numpy
+matplotlib 
+seaborn
+apache-airflow 
+python-dotenv
+apache-airflow-providers-google
+pyarrow 
+gcsfs
+duckdb 
+requests-cache 
+retry-requests 
+numpy 

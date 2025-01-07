@@ -1,0 +1,8 @@
+*.auth
+*.auth/*
+*0_source_data/**
+**__pycache__/
+.ipynb_checkpoints/
+.history
+**logs/
+**google_credentials.json

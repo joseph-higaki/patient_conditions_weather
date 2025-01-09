@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug weather_data_extractor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/weather_data_extractor.py",
+            "args": [
+              "--year", "1980",
+              "--latitude", "41.6",
+              "--longitude", "-71.0",
+              "--destination_bucket_name", "patient-weather-data",
+              "--destination_path", "weather-data-raw/weather-data"
+            ],
+            "console": "integratedTerminal"
+        }, 
+        {
+            "name": "Python Debugger: Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}"
+        }
+    ]
+}

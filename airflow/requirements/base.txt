@@ -1,0 +1,8 @@
+apache-airflow-providers-google
+pandas
+pyarrow 
+gcsfs
+duckdb
+requests-cache 
+retry-requests 
+numpy 

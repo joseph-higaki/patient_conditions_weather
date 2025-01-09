@@ -85,6 +85,7 @@ x-airflow-common:
     - airflow.env
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/dags:/opt/airflow/dags
+    - ${AIRFLOW_PROJ_DIR:-.}/0_source_data/synthea_sample_data_csv_nov2021/csv:/opt/0_source_data/synthea_sample_data_csv_nov2021/csv:ro
     - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/src
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config

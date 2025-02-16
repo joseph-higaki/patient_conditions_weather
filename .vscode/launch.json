@@ -10,9 +10,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/weather_data_extractor.py",
             "args": [
-              "--year", "1980",
-              "--latitude", "41.6",
-              "--longitude", "-71.0",
+              "--year", "1988",
+              "--latitude", "41.8",
+              "--longitude", "-70.6",
               "--destination_bucket_name", "patient-weather-data",
               "--destination_path", "weather-data-raw/weather-data"
             ],

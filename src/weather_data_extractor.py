@@ -9,6 +9,7 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 import time
 import random
 
+import pyarrow.dataset as ds
 
 
 DAILY = 'daily'
@@ -37,9 +38,12 @@ class WeatherDataExtractor:
             destination_path (str): path within the Bucket for storing raw data
             force_extract (bool): Force extraction of the data. When True, the data is extracted even if it already exists at the destination bucket / path
         """
-        self.year = year
-        self.latitude = round(float(latitude), 3) 
-        self.longitude = round(float(longitude), 3) 
+        if year is not None:
+            self.year = year
+        if latitude is not None:
+            self.latitude = round(float(latitude), 3) 
+        if longitude is not None:
+            self.longitude = round(float(longitude), 3) 
         self.destination_bucket_name = destination_bucket_name
         self.destination_path = destination_path
         self.force_extract = force_extract
@@ -54,7 +58,11 @@ class WeatherDataExtractor:
         if frequency not in [DAILY, HOURLY]:
             raise ValueError(f"Invalid frequency: {frequency}")
 
-    def get_weather_stored_data(self, frequency: str) -> pd.DataFrame:
+    def get_weather_stored_data(self, 
+                                frequency: str = DAILY, 
+                                year: int = None, 
+                                latitude: float = None, 
+                                longitde: float = None) -> pd.DataFrame:
         """
         Get weather data from the stored parquet files
         Args:
@@ -65,16 +73,39 @@ class WeatherDataExtractor:
         """
         self.__class__.validate_frequency(frequency)
         data = None
-        try:
-            path = self.get_full_path() + f"/frequency={frequency}/year={self.year}/latitude={self.latitude}/longitude={self.longitude}"
-            logging.info(f"Reading stored data from {path}")
-            data = pd.read_parquet(path, engine="pyarrow")
-        except FileNotFoundError:
-            print(f"Data not found for year={self.year}, latitude={self.latitude}, longitude={self.longitude}")    
+        #try:
+            #path = self.get_full_path() + f"/frequency={frequency}/year={self.year}/latitude={self.latitude}/longitude={self.longitude}"
+            #logging.info(f"Reading stored data from {path}")
+            #data = pd.read_parquet(path, engine="pyarrow")
+        #except FileNotFoundError:
+        #    print(f"Data not found for year={self.year}, latitude={self.latitude}, longitude={self.longitude}")    
+
+        base_path = self.get_full_path() #+ f"/frequency={frequency}"
+        logging.info(f"Reading stored data from {base_path}")
+        
+        dataset = ds.dataset(base_path, format="parquet", partitioning="hive")
+
+        # Build a filter dynamically for your query
+        filter_expression = ds.field("frequency") == frequency
+        
+        if year is not None:
+            filter_expression &= ds.field("year") == year
+
+        # Format latitude and longitude to match the string type in Hive partitions
+        if latitude is not None:
+            filter_expression &= ds.field("latitude") == f"{latitude:.1f}" 
+
+        if longitde is not None:
+            filter_expression &= ds.field("longitude") == f"{longitde:.1f}"
+
+        logging.info(f"Querying dataset with filter: {filter_expression}")
+        data = dataset.to_table(filter=filter_expression).to_pandas()
+        if data.empty:
+            logging.info(f"Data not found for year={self.year}, latitude={self.latitude}, longitude={self.longitude}")
         return data
 
     def exists_weather_cached_data(self, frequency: str):
-        data = self.get_weather_stored_data(frequency)
+        data = self.get_weather_stored_data(frequency, self.year, self.latitude, self.longitude)
         # Simple check if the data is not empty
         # This can be improved by:
         # - Checking the number of records  (can use parquet file metadata)
@@ -85,9 +116,9 @@ class WeatherDataExtractor:
         # - - - Daily: 365 records  
         # - - - Hourly: 8760 records
         if frequency == DAILY:
-            return data is not None
+            return data is not None and not data.empty
         elif frequency == HOURLY:
-            return data is not None    
+            return data is not None and not data.empty
 
     def extract(self):
         """ Fetch weather data from the Open-Meteo API for a given year and location      
@@ -138,8 +169,10 @@ class WeatherDataExtractor:
         # Rename columns for clarity
         daily_df.rename(columns={"time": "date"}, inplace=True)
         daily_df["year"] = self.year
-        daily_df["latitude"] = self.latitude
-        daily_df["longitude"] = self.longitude 
+        formatted_latitude = f"{self.latitude:.1f}"        
+        formatted_longitude = f"{self.longitude:.1f}"
+        daily_df["latitude"] = formatted_latitude
+        daily_df["longitude"] = formatted_longitude
         daily_df["frequency"] = DAILY
         
         logging.info(f"Extracted {len(daily_df)} daily records")

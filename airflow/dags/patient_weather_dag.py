@@ -16,8 +16,9 @@ with DAG(
     dag_id="patient_weather_DAG",
     default_args=default_args,
     description="Patient ingestion and transformation pipeline",
-    schedule_interval= timedelta(minutes=10),
+    schedule_interval= timedelta(minutes=31),
     start_date=days_ago(1),
+    dagrun_timeout=timedelta(minutes=30),
     catchup=False,
 ) as dag:
      
@@ -25,8 +26,8 @@ with DAG(
         print(emr_path)
         print(event_years_coordinates_filepath)
         print(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))                 
-        #extractor = EventYearCoordinatesExtractor(emr_path, event_years_coordinates_filepath)        
-        #extractor.extract()
+        extractor = EventYearCoordinatesExtractor(emr_path, event_years_coordinates_filepath)        
+        extractor.extract()
     
     def extract_weather_data(event_years_coordinates_filepath: str, destination_bucket_name: str, destination_path: str):
         extractor = EventWeatherDataExtractor(event_years_coordinates_filepath, destination_bucket_name, destination_path)        
@@ -34,8 +35,8 @@ with DAG(
 
     upload_emr_files_task = LocalFilesystemToGCSOperator(
             task_id="upload_emr_files",
-            src=os.getenv("SOURCE_PATH")+"qqqq/*",
-            dst=os.getenv("EMR_RAW_PATH") + "qqq/",
+            src=os.getenv("SOURCE_PATH")+"/*",
+            dst=os.getenv("EMR_RAW_PATH") + "/",
             bucket=os.getenv("EMR_RAW_BUCKET")
         )
      
